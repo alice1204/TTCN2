@@ -23,12 +23,11 @@ SYMBOL_MAP = {
     "XAGUSD:CUR": "Silver",
     "CO1:COM":    "Brent",
     "W 1:COM":    "Wheat",
-    "DA:COM":    "Milk",        # Class III Milk Futures
     "USDCHF:CUR": "USD index"    # USD/CHF thường được dùng đại diện hoặc dùng DXY:CUR
 }
 
 # Thứ tự cột trong file CSV
-COLUMNS_ORDER = ["Datetime", "Gold", "Silver", "Brent", "Wheat", "Milk", "USD index"]
+COLUMNS_ORDER = ["Datetime", "Gold", "Silver", "Brent", "Wheat", "USD index"]
 
 # BỘ NHỚ ĐỆM (CACHE) - Lưu trữ trạng thái mới nhất của thị trường
 # Khởi tạo giá trị ban đầu là rỗng ""
