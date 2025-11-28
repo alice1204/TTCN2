@@ -11,28 +11,29 @@ import os
 from datetime import datetime
 
 # ==========================================
-# CẤU HÌNH (Đã bỏ Live Cattle)
+# CẤU HÌNH USER
 # ==========================================
-FILE_PRICE = "data/data_price.csv"
-FILE_CHANGE = "data/data_change.csv"
+# File lưu trữ
+FILE_PRICE = "data/data_price_realtime.csv"
+FILE_CHANGE = "data/data_change_realtime.csv"
 
-# Mapping Symbol
+# Danh sách 6 yếu tố bạn yêu cầu (Đã thêm Milk)
 SYMBOL_MAP = {
     "XAUUSD:CUR": "Gold",
     "XAGUSD:CUR": "Silver",
     "CO1:COM":    "Brent",
-    "W 1:COM":   "Wheat",
-    "DA:COM":    "Milk",
-    "USDCHF:CUR": "USD index"
+    "W 1:COM":    "Wheat",
+    "DA:COM":    "Milk",        # Class III Milk Futures
+    "USDCHF:CUR": "USD index"    # USD/CHF thường được dùng đại diện hoặc dùng DXY:CUR
 }
 
-# Các yếu tố bắt buộc
-REQUIRED_COLUMNS = ["Gold", "Silver", "Brent", "Wheat", "Milk", "USD index"]
-CSV_HEADERS = ["Datetime"] + REQUIRED_COLUMNS
+# Thứ tự cột trong file CSV
+COLUMNS_ORDER = ["Datetime", "Gold", "Silver", "Brent", "Wheat", "Milk", "USD index"]
 
-# BỘ ĐỆM (BUFFER)
-# Cấu trúc: {'Gold': {'p': 2000, 'pch': 0.5}, ...}
-batch_buffer = {} 
+# BỘ NHỚ ĐỆM (CACHE) - Lưu trữ trạng thái mới nhất của thị trường
+# Khởi tạo giá trị ban đầu là rỗng ""
+latest_prices = {name: "" for name in SYMBOL_MAP.values()}
+latest_changes = {name: "" for name in SYMBOL_MAP.values()}
 
 # Cấu hình Web
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -43,77 +44,65 @@ secret_box = None
 NONCE = None
 
 # ==========================================
-# 1. XỬ LÝ 2 FILE CSV SONG SONG
+# 1. XỬ LÝ FILE CSV & LOGIC FILL-FORWARD
 # ==========================================
 def init_csv_files():
-    """Khởi tạo cả 2 file nếu chưa tồn tại"""
+    """Tạo file và viết header nếu chưa có"""
     for filename in [FILE_PRICE, FILE_CHANGE]:
         if not os.path.exists(filename):
             try:
                 with open(filename, mode='w', newline='', encoding='utf-8') as file:
-                    writer = csv.DictWriter(file, fieldnames=CSV_HEADERS)
+                    writer = csv.DictWriter(file, fieldnames=COLUMNS_ORDER)
                     writer.writeheader()
-                print(f"✅ Đã tạo file: {filename}")
+                print(f"✅ Đã tạo file mới: {filename}")
             except Exception as e:
                 print(f"❌ Lỗi tạo file {filename}: {e}")
 
-def process_batch(symbol, price, change_percent):
-    global batch_buffer
+def update_and_save(symbol, price, change_percent):
+    global latest_prices, latest_changes
     
+    # 1. Xác định tên cột (Ví dụ: Gold)
     col_name = SYMBOL_MAP.get(symbol)
     if not col_name: return
 
-    # Lưu cả 2 giá trị vào bộ đệm
-    batch_buffer[col_name] = {
-        'p': price,
-        'pch': change_percent
-    }
+    # 2. Cập nhật vào Bộ nhớ đệm (Cache)
+    latest_prices[col_name] = price
+    latest_changes[col_name] = change_percent
     
-    print(f"   -> Đã nhận: {col_name:<12} (Price: {price} | Chg: {change_percent}%) | Tiến độ: {len(batch_buffer)}/6")
-
-    # KIỂM TRA ĐỦ 6 MÓN CHƯA?
-    current_keys = set(batch_buffer.keys())
-    required_set = set(REQUIRED_COLUMNS)
-
-    if required_set.issubset(current_keys):
-        save_dual_csv()
-
-def save_dual_csv():
-    global batch_buffer
-    
+    # 3. Lấy thời gian hiện tại
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    # Chuẩn bị 2 dòng dữ liệu riêng biệt
-    row_price = {"Datetime": now_str}
-    row_change = {"Datetime": now_str}
-    
-    for name in REQUIRED_COLUMNS:
-        data = batch_buffer[name]
-        row_price[name] = data['p']
-        row_change[name] = data['pch']
 
+    # 4. Chuẩn bị dòng dữ liệu để ghi (Lấy toàn bộ từ Cache ra)
+    # Lưu ý: Các mã KHÔNG nhảy giá sẽ lấy lại giá trị cũ trong Cache
+    row_price = {"Datetime": now_str}
+    row_price.update(latest_prices)
+    
+    row_change = {"Datetime": now_str}
+    row_change.update(latest_changes)
+
+    # 5. Ghi ngay lập tức vào file
     try:
-        # 1. Ghi file GIÁ
+        # Ghi file Giá
         with open(FILE_PRICE, mode='a', newline='', encoding='utf-8') as f_p:
-            writer = csv.DictWriter(f_p, fieldnames=CSV_HEADERS)
+            writer = csv.DictWriter(f_p, fieldnames=COLUMNS_ORDER)
             writer.writerow(row_price)
             
-        # 2. Ghi file % THAY ĐỔI
+        # Ghi file % Thay đổi
         with open(FILE_CHANGE, mode='a', newline='', encoding='utf-8') as f_c:
-            writer = csv.DictWriter(f_c, fieldnames=CSV_HEADERS)
+            writer = csv.DictWriter(f_c, fieldnames=COLUMNS_ORDER)
             writer.writerow(row_change)
-        
-        print(f"\n✅ [ĐỒNG BỘ] {now_str} | Đủ các yếu tố -> Đã ghi vào cả 2 file!")
-        print("-" * 65)
-        
-        # Reset bộ đệm
-        batch_buffer.clear()
+            
+        # In log ra màn hình
+        # Màu xanh nếu tăng, đỏ nếu giảm
+        color = "\033[92m" if change_percent >= 0 else "\033[91m"
+        reset = "\033[0m"
+        print(f"{now_str} | Cập nhật: {col_name:<10} | {color}{price:>10} ({change_percent}%){reset} | (Các mã khác giữ nguyên)")
         
     except Exception as e:
         print(f"❌ Lỗi ghi file: {e}")
 
 # ==========================================
-# 2. AUTH & CRYPTO (Giữ nguyên)
+# 2. AUTH & CRYPTO (Phần này giữ nguyên)
 # ==========================================
 def get_auth_data():
     headers = {'User-Agent': USER_AGENT}
@@ -166,11 +155,12 @@ sio = socketio.Client(logger=False, engineio_logger=False)
 @sio.event
 def connect():
     print("[3/4] 🚀 Socket đã kết nối!")
+    # Đăng ký các mã
     sio.emit('subscribe', {'s': list(SYMBOL_MAP.keys())})
     sio.emit('subscribe', {'s': ['commodities', 'market']})
     
-    print(f"[4/4] ⏳ Đang chờ GOM ĐỦ 5 mã: {', '.join(REQUIRED_COLUMNS)}")
-    print(f"      Output: {FILE_PRICE} & {FILE_CHANGE}")
+    print(f"[4/4] ⚡ Chế độ FILL-FORWARD đang chạy...")
+    print(f"      File: {FILE_PRICE} & {FILE_CHANGE}")
     print("-" * 65)
 
 @sio.on('*')
@@ -183,18 +173,18 @@ def catch_all(event, data):
         
         for item in items:
             symbol = item.get('s')
-            price = item.get('p')      # Lấy giá
-            change = item.get('pch')   # Lấy % thay đổi
+            price = item.get('p')
+            change = item.get('pch')
             
-            # Điều kiện: Đúng Symbol + Có giá + Có % thay đổi
+            # Chỉ xử lý khi đúng mã và có dữ liệu giá
             if symbol in SYMBOL_MAP and price is not None and change is not None:
-                process_batch(symbol, price, change)
+                update_and_save(symbol, price, change)
 
 # ==========================================
 # MAIN
 # ==========================================
 if __name__ == "__main__":
-    init_csv_files() # Khởi tạo 2 file
+    init_csv_files()
     token, key, nonce, cookies = get_auth_data()
     
     if token and setup_crypto(key, nonce):
@@ -208,6 +198,6 @@ if __name__ == "__main__":
             )
             sio.wait()
         except KeyboardInterrupt:
-            print(f"\n👋 Đã dừng! Dữ liệu nằm trong {FILE_PRICE} và {FILE_CHANGE}")
+            print(f"\n👋 Bye!")
         except Exception as e:
             print(f"\n❌ Lỗi: {e}")
