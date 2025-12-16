@@ -1,0 +1,11 @@
+# Bỏ qua môi trường ảo
+.venv/
+venv/
+env/
+
+# Bỏ qua node_modules (nếu có dùng JS)
+node_modules/
+
+# Bỏ qua file rác của Python
+__pycache__/
+*.pyc
