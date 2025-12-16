@@ -17,14 +17,19 @@ Dự án yêu cầu **Python 3.10** hoặc **3.11** (Lưu ý: Python 3.12+ có t
 ```bash
 git clone [https://github.com/alice1204/TTCN2.git](https://github.com/alice1204/TTCN2.git)
 cd TTCN2
+```
 
 ### 2. Thiết lập môi trường ảo .venv
+```bash
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate
+```
 
 ### 3. Cài đặt thư viện
+```bash
 pip install -r requirements.txt
+```
 
-### HƯỚNG DẪN SỬ DỤNG
+### 4. HƯỚNG DẪN SỬ DỤNG
 Bước 1: Làm sạch dữ liệu: Chạy các file trong `notebooks/01_data_processing/` để xử lý dữ liệu thô.
 Bước 2: Huấn luyện mô hình: Mở các file trong `notebooks/02_models/` và `notebooks/03_models (only Gold)/` để train và xem kết quả dự báo.
