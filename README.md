@@ -33,4 +33,5 @@ pip install -r requirements.txt
 
 ### 4. HƯỚNG DẪN SỬ DỤNG
 - Bước 1: Làm sạch dữ liệu: Chạy các file trong `notebooks/01_data_processing/` để xử lý dữ liệu thô.
-- Bước 2: Huấn luyện mô hình: Mở các file trong `notebooks/02_models/` và `notebooks/03_models (only Gold)/` để train và xem kết quả dự báo.
+- Bước 2: Huấn luyện mô hình: Chạy từng file trong `notebooks/02_models/` và `notebooks/03_models (only Gold)/` để train và xem kết quả dự báo.
+- Bước 3: Tiến hành tạo biểu đồ so sánh hiệu năng các mô hình trong `notebooks/04_comparision/model_benchmark.ipynb`
