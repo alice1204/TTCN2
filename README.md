@@ -1,6 +1,6 @@
 # 📈 Gold Price Prediction Project
 
-Dự án nghiên cứu và dự đoán giá Vàng sử dụng các mô hình Machine Learning (Linear Regression, XGBoost) và Deep Learning (LSTM). Dự án so sánh hiệu suất giữa việc chỉ sử dụng dữ liệu giá Vàng (Univariate) và dữ liệu đa biến (Multivariate: Dầu, Bạc, USD Index...).
+Dự án ứng dụng phân tích dữ iệu trong phân tích giá vàng bạc để dự đoán giá vàng trong tương lai.
 
 ## 📂 Cấu trúc thư mục
 - `data/`: Chứa dữ liệu thô và dữ liệu đã làm sạch.
@@ -8,6 +8,7 @@ Dự án nghiên cứu và dự đoán giá Vàng sử dụng các mô hình Mac
 - `models/`: Các file mô hình đã được huấn luyện.
 - `results/`: Kết quả biểu đồ và bảng so sánh độ chính xác.
 - `scipts/`: Các file script để lấy data từ TradingEconomics
+- `draft/`: Thư mục thùng rác
 
 ## 🛠 Yêu cầu cài đặt
 
@@ -31,5 +32,5 @@ pip install -r requirements.txt
 ```
 
 ### 4. HƯỚNG DẪN SỬ DỤNG
-Bước 1: Làm sạch dữ liệu: Chạy các file trong `notebooks/01_data_processing/` để xử lý dữ liệu thô.
-Bước 2: Huấn luyện mô hình: Mở các file trong `notebooks/02_models/` và `notebooks/03_models (only Gold)/` để train và xem kết quả dự báo.
+- Bước 1: Làm sạch dữ liệu: Chạy các file trong `notebooks/01_data_processing/` để xử lý dữ liệu thô.
+- Bước 2: Huấn luyện mô hình: Mở các file trong `notebooks/02_models/` và `notebooks/03_models (only Gold)/` để train và xem kết quả dự báo.
